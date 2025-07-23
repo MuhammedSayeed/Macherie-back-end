@@ -1,36 +1,93 @@
-import slugify from "slugify";
-import { categoryModel } from "../../databases/models/categories";
 import { catchError } from "../../middleware/catchError";
 import sendError from "../../utils/SendError";
+import { categoryModel } from "../../databases/models/category";
 
 
+const getCategory = catchError(async (req, res, next) => {
+    const { value } = req.params;
 
-const getCategories = catchError(async (req, res, next) => {
-    const categories = await categoryModel.find({})
+    console.log(value , "value");
+    
+    const results = await categoryModel.aggregate([
+        {
+            $lookup: {
+                from: "categories",
+                localField: "parent",
+                foreignField: "_id",
+                as: "parentData"
+            }
+        },
+        { $unwind: "$parentData" },
+        { $match: { "parentData.value": value } },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                value: 1,
+                image: 1,
+                parent: "$parentData._id"
+            }
+        }
+    ])
+
     res.status(200).json({
         success: true,
-        categories
+        results
+    })
+})
+
+const getCategories = catchError(async (req, res, next) => {
+    const categories = await categoryModel.aggregate([
+        { $match: { parent: null } },
+        {
+            $lookup: {
+                from: "categories",
+                localField: "_id",
+                foreignField: "parent",
+                as: "subCategories"
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                value: 1,
+                slug: 1,
+                subCategories: {
+                    _id: 1,
+                    name: 1,
+                    value: 1,
+                    slug: 1,
+                    image: 1
+                }
+            }
+        }
+    ])
+    res.status(200).json({
+        success: true,
+        results: categories
     })
 })
 const addCategory = catchError(async (req, res, next) => {
-    const { name, image } = req.body;
+    const { name, parent } = req.body
 
-    const loweredCaseName = name.toLowerCase();
-    const slug = slugify(loweredCaseName);
+    const upperedCaseName = name.toUpperCase();
 
-    // check if category already exists
-    const existingCategory = await categoryModel.findOne({ name: loweredCaseName }).select('_id');
-    if (existingCategory) return sendError(next, "Category already exists", 400);
+    const value = name.replace(/[\s&-]+/g, "").toLowerCase();
 
-    // create category
-    await categoryModel.create({
-        name: loweredCaseName,
-        slug,
-        image
-    });
+    const exists = await categoryModel.findOne({ value })
+
+    if (exists) return sendError(next, "Category already exists", 400)
+
+    const category = await categoryModel.create({
+        name: upperedCaseName,
+        value,
+        parent: parent || null,
+    })
 
     res.status(200).json({
-        success: true
+        success: true,
+        category,
     })
 })
 const deleteCategory = catchError(async (req, res, next) => {
@@ -44,15 +101,14 @@ const deleteCategory = catchError(async (req, res, next) => {
 })
 const updateCategory = catchError(async (req, res, next) => {
     const { id } = req.params;
-    const { name, image } = req.body;
+    const { name } = req.body;
 
+    const upperedCaseName = name.toUpperCase();
     const loweredCaseName = name.toLowerCase();
-    const slug = slugify(loweredCaseName);
 
     const updatedDoc = await categoryModel.findByIdAndUpdate(id, {
-        name: loweredCaseName,
-        slug,
-        image
+        name: upperedCaseName,
+        value: loweredCaseName,
     })
 
     if (!updatedDoc) return sendError(next, "Category not found", 404);
@@ -63,6 +119,7 @@ const updateCategory = catchError(async (req, res, next) => {
 })
 
 export {
+    getCategory,
     getCategories,
     addCategory,
     deleteCategory,

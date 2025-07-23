@@ -1,4 +1,5 @@
 import * as yup from 'yup';
+import { idSchema } from './id';
 
 // Reusable field schemas
 const nameSchema = yup
@@ -7,28 +8,22 @@ const nameSchema = yup
     .max(26, 'Category name must not exceed 26 characters')
     .required('Category name is required');
 
-const imageSchema = yup
-    .string()
-    .required('Image URL is required');
 
-const idSchema = yup
-    .string()
-    .required('Category ID is required');
+
+
 
 // Full object schemas
 const addCategorySchema = yup.object({
     name: nameSchema,
-    image: imageSchema,
 });
 
 const deleteCategorySchema = yup.object({
-    id: idSchema,
+    id: idSchema('Category'),
 });
 
 const updateCategorySchema = yup.object({
-    id: idSchema,
+    id: idSchema('Category'),
     name: nameSchema,
-    image: imageSchema,
 });
 
 export {
