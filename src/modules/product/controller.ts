@@ -118,19 +118,16 @@ const getProduct = catchError(async (req, res, next) => {
 });
 
 const checkAvailability = catchError(async (req, res, next) => {
-    const { id, color, size, quantity } = req.params;
+    const { id, size, quantity } = req.params;
     const results = await VariantModel.findOne({
-        _id: id,
-        "color.colorIdentifier": color
+        _id: id
     });
 
     if (!results) return sendError(next, "Product not found", 404);
 
     const productSize = results.sizes.find((s) => s.size === size);
-    console.log("productSize: ", productSize);
-    
+
     const intQuantity = parseInt(quantity, 10);
-    console.log("intQuantity: ", productSize);
 
     const isAvailable = !!productSize && productSize.stock >= intQuantity;
     if (!isAvailable) return sendError(next, "Insufficient stock", 400);

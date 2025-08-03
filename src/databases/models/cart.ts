@@ -7,7 +7,10 @@ export interface ICartItem {
     price: number
     image: string
     quantity: number
-    color?: string
+    color?: {
+        colorHexCode: String,
+        colorIdentifier: String,
+    }
     size?: string
 }
 
@@ -32,7 +35,10 @@ const CartItemSchema = new Schema({
     price: Number,
     image: String,
     quantity: Number,
-    color: String,
+    color: {
+        colorHexCode: String,
+        colorIdentifier: String,
+    },
     size: String
 }, { _id: false })
 
@@ -47,4 +53,4 @@ const CartSchema = new Schema({
     timestamps: true
 })
 
-export const Cart = mongoose.model<ICart>("Cart", CartSchema)
+export const CartModel = mongoose.model<ICart>("Cart", CartSchema)

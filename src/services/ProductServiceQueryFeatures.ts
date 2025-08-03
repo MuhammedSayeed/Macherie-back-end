@@ -31,8 +31,6 @@ class ProductQueryService extends AggregateQueryFeatures {
     filterByColors() {
         if (this.RequestQuery.colors) {
             const colors = this.RequestQuery.colors.split(',').map(color => color.trim());
-            console.log(colors);
-
             if (colors.length > 0) {
                 this.match({
                     'color.colorIdentifier': { $in: colors }

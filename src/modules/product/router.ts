@@ -6,7 +6,7 @@ const router = express.Router();
 router.post("/", controller.addProduct)
 router.get("/variant/:id/:color", controller.getProduct)
 router.get("/:category/:style", controller.getProducts)
-router.get("/availability/:id/:color/:size/:quantity", controller.checkAvailability)
+router.get("/availability/:id/:size/:quantity", controller.checkAvailability)
 
 
 
